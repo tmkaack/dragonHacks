@@ -54,7 +54,10 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 #define BOLUS 1
 #define OPTIONS 2
 
+
 int oldcolor, currentcolor, scene;
+int currentLevel = 0, button = 0;
+String levelString = "";
 
 void setup(void) {
   while (!Serial);     // used for leonardo debugging
@@ -131,7 +134,6 @@ void loop() {
     return;
   }
   TS_Point p = ctp.getPoint();
-  
   // Print out raw data from screen touch controller
   Serial.print("X = "); Serial.print(p.x);
   Serial.print("\tY = "); Serial.println(p.y); 
@@ -159,8 +161,63 @@ void loop() {
     if(p.y > 10 && p.y < 80 && p.x > 190 && p.x < 230){
       scene = MAIN;
       drawMain();
+    }
+      // click detection
+    int xb, yb, level = 0;
+    int minX = 0, maxX = 120, minY = 0, maxY = 240;
+    int width = 80, height = 30;
+    int buttons[] = {-1, '0', -2, '7', '8', '9', '4', '5', '6', '1', '2', '3'};
+    int tempLevel = 0;
+    String oldLevel = "";
+    if(p.y < maxY && p.y > minY && p.x < maxX && p.x > minX){
+      yb = p.y/width;
+      xb = p.x/height;
+      level = buttons[yb + xb*3];
+      tft.setTextColor(WHITE); tft.setTextSize(3);
+      tft.fillRect(118, 60, 50, 40, GRAY);
+      tft.setCursor(125, 70);
+      if (level == -1){
+        //currentLevel needs to be tracked
+        if(currentLevel + button < 1000){
+          currentLevel += button;
+        }
+        else{
+          currentLevel = 999;
+        }
+        levelString = "";
+        tft.print(currentLevel);
+        button = currentLevel;
+      }
+      else if(level == -2){
+        currentLevel = button;
+        levelString = "";
+        tft.print(currentLevel);
+      }
+      else{
+        levelString += (char)level;
+        tempLevel = levelString.toInt();
+        if(tempLevel < 1000){
+          button = tempLevel;
+          tft.print(button);
+          oldLevel = levelString;
+        }
+        else{
+          tempLevel = 999;
+          button = tempLevel;
+          tft.print(button);
+          oldLevel = levelString;
+        }
+          
+      }
+      Serial.println(yb);
+      Serial.println(xb);
+      Serial.println(level);
+      Serial.println(levelString);
+      Serial.println(currentLevel);
+      Serial.println(button);
+      delay(500);
+    } 
       return;
-    }else if(
   }
   delay(100);
 }
@@ -175,24 +232,42 @@ void drawOptions(){
 
 void drawBolus(){
   int width = 80;
-  int height = 40;
+  int height = 30;
   int calcNumber = 1;
+  currentLevel = 0;
+  levelString = "";
   tft.fillScreen(BLACK);  
   tft.setCursor(10, 70);
   tft.setTextColor(WHITE); tft.setTextSize(3);
   tft.print("Carbs: ");
   tft.fillRect(118, 60, 100, 40, GRAY);
+  tft.setCursor(125, 70);
+  tft.print(currentLevel);
   drawBackButton();
   for(int i = 0; i < 4; i++){
     for(int j = 0; j < 3; j++){
       tft.fillRect(10+j*width, 120+i*height, width-2, height-2, GRAY);
       tft.setCursor(10+j*width+30, 120+i*height+8);
-      tft.setTextColor(WHITE); tft.setTextSize(3);
-      tft.print(calcNumber);
-      calcNumber++;
+      tft.setTextColor(WHITE); tft.setTextSize(2);
+      if(calcNumber < 10){
+        tft.print(calcNumber);
+        calcNumber++;
+      }
+      else{
+        if(j == 0){
+          tft.print("+");
+        }
+        else if(j == 1){
+          tft.print("0");
+        }
+        else if(j == 2){
+          tft.setCursor(10+j*width+10, 120+i*height+8);
+          tft.print("Enter");
+        }
+      }
     }
   }
-  tft.fillRect  
+    //tft.fillRect(250, 
 //  tft.setCursor(150, 50); tft.setTextSize(8);
 //  tft.print("GET FUCKED");
 }

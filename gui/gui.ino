@@ -158,6 +158,7 @@ void loop() {
     }
   }else if(scene == BOLUS){
   }
+  wait(100);
 }
 
 void drawOptions(){

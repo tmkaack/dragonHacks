@@ -52,7 +52,12 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 // Size of the color selection boxes and the paintbrush size
 #define BOXSIZE 40
 #define PENRADIUS 3
-int oldcolor, currentcolor;
+#define MAIN 0
+#define BOLUS 1
+#define OPTIONS 2
+
+
+int oldcolor, currentcolor, scene;
 
 void setup(void) {
   while (!Serial);     // used for leonardo debugging
@@ -109,6 +114,7 @@ void setup(void) {
 
   Serial.println("Capacitive touchscreen started");
   drawMain();
+  scene = 0;
 //  tft.fillScreen(BLACK);
 //  
 //  // make the color selection boxes
@@ -125,75 +131,51 @@ void setup(void) {
 }
 
 void loop() {
-//  // Wait for a touch
-//  if (! ctp.touched()) {
-//    return;
-//  }
-//
-//  // Retrieve a point  
-//  TS_Point p = ctp.getPoint();
-//  
-// /*
-//  // Print out raw data from screen touch controller
-//  Serial.print("X = "); Serial.print(p.x);
-//  Serial.print("\tY = "); Serial.print(p.y);
-//  Serial.print(" -> ");
-// */
-//
-//  // flip it around to match the screen.
-//  TS_Point p2 = p;
-//  p.y = map(p2.x, 0, 240, 240, 0);
-//  p.x = map(p2.y, 0, 320, 0, 320);
-//
-//  // Print out the remapped (rotated) coordinates
-//  Serial.print("("); Serial.print(p.x);
-//  Serial.print(", "); Serial.print(p.y);
-//  Serial.println(")");
-//  
-//
-//  if (p.y < BOXSIZE) {
-//     oldcolor = currentcolor;
-//
-//     if (p.x < BOXSIZE) { 
-//       currentcolor = RED; 
-//       tft.drawRect(0, 0, BOXSIZE, BOXSIZE, WHITE);
-//     } else if (p.x < BOXSIZE*2) {
-//       currentcolor = YELLOW;
-//       tft.drawRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, WHITE);
-//     } else if (p.x < BOXSIZE*3) {
-//       currentcolor = GREEN;
-//       tft.drawRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, WHITE);
-//     } else if (p.x < BOXSIZE*4) {
-//       currentcolor = CYAN;
-//       tft.drawRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, WHITE);
-//     } else if (p.x < BOXSIZE*5) {
-//       currentcolor = BLUE;
-//       tft.drawRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, WHITE);
-//     } else if (p.x <= BOXSIZE*6) {
-//       currentcolor = MAGENTA;
-//       tft.drawRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, WHITE);
-//     }
-//
-//     if (oldcolor != currentcolor) {
-//        if (oldcolor == RED) 
-//          tft.fillRect(0, 0, BOXSIZE, BOXSIZE, RED);
-//        if (oldcolor == YELLOW) 
-//          tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, YELLOW);
-//        if (oldcolor == GREEN) 
-//          tft.fillRect(BOXSIZE*2, 0, BOXSIZE, BOXSIZE, GREEN);
-//        if (oldcolor == CYAN) 
-//          tft.fillRect(BOXSIZE*3, 0, BOXSIZE, BOXSIZE, CYAN);
-//        if (oldcolor == BLUE) 
-//          tft.fillRect(BOXSIZE*4, 0, BOXSIZE, BOXSIZE, BLUE);
-//        if (oldcolor == MAGENTA) 
-//          tft.fillRect(BOXSIZE*5, 0, BOXSIZE, BOXSIZE, MAGENTA);
-//     }
-//  }
-//  if (((p.y-PENRADIUS) > BOXSIZE) && ((p.y+PENRADIUS) < tft.height())) {
-//    tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
-//  }
+  if (!ctp.touched()){
+    return;
+  }
+  TS_Point p = ctp.getPoint();
+  
+  // Print out raw data from screen touch controller
+  Serial.print("X = "); Serial.print(p.x);
+  Serial.print("\tY = "); Serial.println(p.y);
+
+  if(scene == MAIN){
+    if(p.y > 10 && p.y < 150 && p.x > 100 && p.x < 150){
+      scene = BOLUS;
+      drawBolus();
+      return;
+    }else if(p.y > 170 && p.y < 310 && p.x > 100 && p.x < 150){
+      scene = OPTIONS;
+      drawOptions();
+      return;
+    }
+  }else if(scene == OPTIONS){
+    if(p.y > 10 && p.y < 90 && p.x > 190 && p.x < 230){
+      scene = MAIN;
+      drawMain();
+      return;
+    }
+  }else if(scene == BOLUS){
+  }
 }
 
+void drawOptions(){
+  tft.fillScreen(BLACK);
+  tft.fillRect(60, 60, 210, 130, RED);
+  tft.fillRect(10, 10, 80, 40, GRAY);
+  tft.setCursor(20,20); tft.setTextSize(3);
+  tft.print("Back");
+  tft.setCursor(75, 95); tft.setTextSize(8);
+  tft.print("STOP");
+
+}  
+
+void drawBolus(){
+  tft.fillScreen(BLACK);
+  tft.setCursor(150, 50); tft.setTextSize(8);
+  tft.print("GET FUCKED");
+}
 void drawMain(){
   tft.fillScreen(BLACK);
   tft.setCursor(10, 10);

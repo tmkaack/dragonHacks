@@ -23,7 +23,7 @@
  
 #include <Stepper.h>
  
-const int stepsPerRevolution = 48;  // change this to fit the number of steps per revolution
+const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
 // for your motor
  
 // initialize the stepper library on pins 8 through 11:

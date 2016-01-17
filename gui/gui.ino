@@ -15,8 +15,6 @@
 
 
 #include <Adafruit_GFX.h>    // Core graphics library
-#include <SPI.h>       // this is needed for display
-#include <Adafruit_ILI9341.h>
 #include <Wire.h>      // this is needed for FT6206
 #include <Adafruit_FT6206.h>
 
@@ -56,7 +54,6 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 #define BOLUS 1
 #define OPTIONS 2
 
-
 int oldcolor, currentcolor, scene;
 
 void setup(void) {
@@ -76,7 +73,6 @@ void setup(void) {
   Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
 
   tft.reset();
-
   uint16_t identifier = tft.readID();
 
   if(identifier == 0x9325) {
@@ -113,8 +109,8 @@ void setup(void) {
   }
 
   Serial.println("Capacitive touchscreen started");
-  drawMain();
-  scene = 0;
+  drawBolus();
+  scene = 1;
 //  tft.fillScreen(BLACK);
 //  
 //  // make the color selection boxes
@@ -138,45 +134,69 @@ void loop() {
   
   // Print out raw data from screen touch controller
   Serial.print("X = "); Serial.print(p.x);
-  Serial.print("\tY = "); Serial.println(p.y);
+  Serial.print("\tY = "); Serial.println(p.y); 
 
   if(scene == MAIN){
     if(p.y > 10 && p.y < 150 && p.x > 100 && p.x < 150){
       scene = BOLUS;
       drawBolus();
       return;
-    }else if(p.y > 170 && p.y < 310 && p.x > 100 && p.x < 150){
+    }
+    else if(p.y > 170 && p.y < 310 && p.x > 100 && p.x < 150){
       scene = OPTIONS;
       drawOptions();
       return;
     }
-  }else if(scene == OPTIONS){
-    if(p.y > 10 && p.y < 90 && p.x > 190 && p.x < 230){
+  }
+  else if(scene == OPTIONS){
+    if(p.y > 10 && p.y < 80 && p.x > 190 && p.x < 230){
       scene = MAIN;
       drawMain();
       return;
     }
-  }else if(scene == BOLUS){
   }
-  wait(100);
+  else if(scene == BOLUS){
+    if(p.y > 10 && p.y < 80 && p.x > 190 && p.x < 230){
+      scene = MAIN;
+      drawMain();
+      return;
+    }else if(
+  }
+  delay(100);
 }
 
 void drawOptions(){
   tft.fillScreen(BLACK);
+  drawBackButton();
   tft.fillRect(60, 60, 210, 130, RED);
-  tft.fillRect(10, 10, 80, 40, GRAY);
-  tft.setCursor(20,20); tft.setTextSize(3);
-  tft.print("Back");
   tft.setCursor(75, 95); tft.setTextSize(8);
   tft.print("STOP");
-
 }  
 
 void drawBolus(){
-  tft.fillScreen(BLACK);
-  tft.setCursor(150, 50); tft.setTextSize(8);
-  tft.print("GET FUCKED");
+  int width = 80;
+  int height = 40;
+  int calcNumber = 1;
+  tft.fillScreen(BLACK);  
+  tft.setCursor(10, 70);
+  tft.setTextColor(WHITE); tft.setTextSize(3);
+  tft.print("Carbs: ");
+  tft.fillRect(118, 60, 100, 40, GRAY);
+  drawBackButton();
+  for(int i = 0; i < 4; i++){
+    for(int j = 0; j < 3; j++){
+      tft.fillRect(10+j*width, 120+i*height, width-2, height-2, GRAY);
+      tft.setCursor(10+j*width+30, 120+i*height+8);
+      tft.setTextColor(WHITE); tft.setTextSize(3);
+      tft.print(calcNumber);
+      calcNumber++;
+    }
+  }
+  tft.fillRect  
+//  tft.setCursor(150, 50); tft.setTextSize(8);
+//  tft.print("GET FUCKED");
 }
+
 void drawMain(){
   tft.fillScreen(BLACK);
   tft.setCursor(10, 10);
@@ -193,3 +213,14 @@ void drawMain(){
   tft.setCursor(180, 115);
   tft.print("Options");
 }
+
+void drawConfirmBolus(){
+  
+}
+
+void drawBackButton(){
+  tft.fillRect(10, 10, 80, 40, GRAY);
+  tft.setCursor(20,20); tft.setTextSize(3);
+  tft.print("Back");
+}
+
